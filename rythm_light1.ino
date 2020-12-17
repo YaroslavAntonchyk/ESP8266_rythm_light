@@ -26,21 +26,21 @@ void loop()
    
     // max filter 
     volume_level_max = 0;
-    for(uint8_t i = 0; i < 50; i++)
+    for(uint8_t i = 0; i < SAMPLES; i++)
     {
          volume_level = system_adc_read();
          if(volume_level_max < volume_level)
             volume_level_max = volume_level;
     }
     // low pass filter
-    // volume_level_filtred = static_cast<float>(volume_level_max)*0.99 + volume_level_filtred*0.01;
+    volume_level_filtred = static_cast<float>(volume_level_max)*0.9 + volume_level_filtred*0.1;
 
-    plot_level(static_cast<uint16_t>(volume_level_max));
+    plot_level(static_cast<uint16_t>(volume_level_filtred));
 
 
-    // for(int k = 0; k < NUM_LEDS; k++)
-    //     leds[k] = CRGB(0, 128/2, 64/2); 
-    // FastLED.show();
+    for(int k = 0; k < NUM_LEDS; k++)
+        leds[k] = CRGB(0, 128/2, 64/2); 
+    FastLED.show();
     // t = micros();
 
 }
