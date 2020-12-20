@@ -9,39 +9,43 @@
 CRGB leds[NUM_LEDS];
 uint16_t volume_level = 0;
 uint16_t volume_level_max = 0;
+uint16_t abs_volume_level = 0;
 float volume_level_filtred = 500.0F;
+float mean_volume = 420;
 // for debuging 
 uint64_t t;
 
 void setup() 
 {
-  Serial.begin(115200);
+  Serial.begin(250000);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
 //   t = micros();
 }
 
 void loop() 
 {
-    // Serial.println(micros() - t); 
-   
-    // max filter 
-    volume_level_max = 0;
-    for(uint8_t i = 0; i < SAMPLES; i++)
-    {
-         volume_level = system_adc_read();
-         if(volume_level_max < volume_level)
-            volume_level_max = volume_level;
-    }
-    // low pass filter
-    volume_level_filtred = static_cast<float>(volume_level_max)*0.9 + volume_level_filtred*0.1;
+  // Serial.println(micros() - t); 
+  
+  // max filter 
+  volume_level_max = 0;
+  for(uint8_t i = 0; i < SAMPLES; i++)
+  {
+    volume_level = system_adc_read();
+    mean_volume = mean_volume*0.999 + static_cast<float>(volume_level)*0.001;
+    abs_volume_level = abs(volume_level - static_cast<uint16_t>(mean_volume));
 
-    plot_level(static_cast<uint16_t>(volume_level_filtred));
+    if(volume_level_max < abs_volume_level)
+      volume_level_max = abs_volume_level;
+  }
+  // low pass filter
+  volume_level_filtred = static_cast<float>(volume_level_max)*0.05 + volume_level_filtred*0.95;
 
+  plot_level(static_cast<uint16_t>(volume_level_filtred));
 
-    for(int k = 0; k < NUM_LEDS; k++)
-        leds[k] = CRGB(0, 128/2, 64/2); 
-    FastLED.show();
-    // t = micros();
+  for(int k = 0; k < NUM_LEDS; k++)
+    leds[k] = CRGB(0, 128/4, 64/4); 
+  FastLED.show();
+  // t = micros();
 
 }
 
