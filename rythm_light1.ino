@@ -18,7 +18,7 @@ uint8_t MIN_LED_LEVEL = 20;
 uint8_t MAX_LED_LEVEL = 255;
 
 CRGB leds[NUM_LEDS];
-ESP8266WebServer server(80);
+WiFiServer server(80);
 
 uint16_t volume_level = 0;
 uint16_t volume_level_max = 0;
@@ -36,6 +36,7 @@ uint8_t r, g, b;
 
 // for debuging 
 uint64_t t;
+int cnt = 0;
 
 
 void setup() 
@@ -56,11 +57,10 @@ void setup()
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("ant_lab")) {
-    Serial.println("MDNS responder started");
-  }
+  // if (MDNS.begin("ant_lab")) {
+  //   Serial.println("MDNS responder started");
+  // }
 
-  server.on("/", handleRoot);
   server.begin();
   Serial.println("HTTP server started");
 
@@ -69,15 +69,22 @@ void setup()
 
 void loop() 
 {
-  rythm_light();
-  // server.handleClient();
+  WiFiClient client = server.available();
+
+  if(client) 
+  {
+    Serial.println("New Client.");
+    client.setTimeout(1000); 
+    client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\nHello world! "));
+    client.stop();
+    Serial.println("Client disconnected.");
+  }
+  else
+  {
+    rythm_light();
+  }
   // MDNS.update();
 
-}
-
-void handleRoot() 
-{
-  server.send(200, "text/plain", "hello from esp8266!");
 }
 
 void rythm_light()
@@ -86,7 +93,8 @@ void rythm_light()
   volume_level_max = 0;
   for(uint8_t i = 0; i < SAMPLES; i++)
   {
-    volume_level = system_adc_read();
+    // volume_level = system_adc_read();
+    volume_level = 9;
     // calculate mean value 
     mean_volume = mean_volume*0.999 + static_cast<float>(volume_level)*0.001;
     abs_volume_level = abs(volume_level - static_cast<uint16_t>(mean_volume));
@@ -100,7 +108,7 @@ void rythm_light()
   out_volume_level = constrain(out_volume_level, MIN_LED_LEVEL, MAX_LED_LEVEL);
   // normilize volume level
   out_level_norm = static_cast<float>(out_volume_level) / static_cast<float>(MAX_LED_LEVEL);
-  plot_level(static_cast<uint16_t>(out_volume_level));
+  // plot_level(static_cast<uint16_t>(out_volume_level));
   r = static_cast<uint8_t>(color[current_color][0]*out_level_norm);
   g = static_cast<uint8_t>(color[current_color][1]*out_level_norm);
   b = static_cast<uint8_t>(color[current_color][2]*out_level_norm);
