@@ -28,24 +28,32 @@ float color[][3] = {{0.0F, 128.0F, 128.0F},
                     {255.0F, 255.0F, 255.0F}
                    };
 
-uint8_t current_color = 2;
-uint8_t mode = 2;
+uint8_t current_color = 4;
+uint8_t mode = 1;
 
 // for debuging 
-// uint64_t t;
+uint64_t t;
 // int cnt = 0;
 
 void setup() 
 {
   Serial.begin(250000);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  // t = micros();
+  t = micros();
   // Serial.println(micros() - t); 
   // t = micros();
 }
 
 void loop() 
 {
+  if((micros() - t) > 300000000) //every 5 mins 
+  {
+    t = micros();
+    current_color = (current_color < 9) ? (current_color + 1) : 0;
+  }
+  if(t > micros())
+    t = micros(); 
+
   switch(mode)
   {
     case 1 :
@@ -87,7 +95,7 @@ float vu_meter() // return
   // normilize volume level
   float out_level_norm = static_cast<float>(out_volume_level) / static_cast<float>(MAX_LED_LEVEL);
 
-  plot_level(static_cast<uint16_t>(out_volume_level));
+  // plot_level(static_cast<uint16_t>(out_volume_level));
   return out_level_norm;
   
 }
