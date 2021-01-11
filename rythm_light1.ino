@@ -29,12 +29,18 @@ float color[][3] = {{0.0F, 128.0F, 128.0F},
                    };
 
 uint8_t current_color = 4;
-uint8_t mode = 1;
+uint8_t mode = 0;
 
+struct device_settings
+{ 
+  int color; // ToDo expand for 3 channels (r, g, b)
+  uint8_t mode;
+  uint8_t brightness;
+  uint8_t sensitivity;
+} settings;
 // for debuging 
 // uint64_t t;
 // int cnt = 0;
-
 
 void setup() 
 {
@@ -44,7 +50,23 @@ void setup()
 
 void loop() 
 {
-  if(Serial.available() > 0) // ToDo create separate function
+  update_settings();
+  switch(settings.mode)
+  {
+    case 1 :
+      rythm_light_blink(settings.color, vu_meter());
+      break;
+    case 2 :
+      rythm_light_expand(settings.color, vu_meter());
+      break;
+    default:
+      simple_flash(settings.color, 0.5F);
+  }
+}
+
+void update_settings()
+{
+  if(Serial.available() > 0)
   {
     String payload = "";
     while(Serial.available() > 0)
@@ -52,29 +74,29 @@ void loop()
       payload += static_cast<char>(Serial.read());
     }
 
-    int idx = payload.indexOf("color");
-    int color_dummy = 0;
+    int idx_col = payload.indexOf("color");
+    int idx_mode = payload.indexOf("mode");
 
-    if(idx != -1)
+    if(idx_col != -1)
     {
-      for(uint8_t i = 0; i < idx; i++)
+      settings.color = 0; //To Do create function retrieve_number 
+      for(uint8_t i = 0; i < idx_col; i++)
       {
-        color_dummy = color_dummy*10 + static_cast<int>(payload.charAt(i)) - 48; //0 - ASCII code - 48
+        settings.color = settings.color*10 + static_cast<int>(payload.charAt(i)) - 48; //0 - ASCII code - 48
       }
+      Serial.println(settings.color);
     }
-      Serial.println(payload);
-      Serial.println(color_dummy);
-  }
-  switch(mode)
-  {
-    case 1 :
-      rythm_light_blink(current_color, vu_meter());
-      break;
-    case 2 :
-      rythm_light_expand(current_color, vu_meter());
-      break;
-    default:
-      simple_flash(0, 0.5F);
+
+    if(idx_mode != -1)
+    {
+      settings.mode = 0; //To Do create function retrieve_number 
+      for(uint8_t i = 0; i < idx_mode; i++)
+      {
+        settings.mode = settings.mode*10 + static_cast<int>(payload.charAt(i)) - 48; //0 - ASCII code - 48
+      }
+      Serial.println(settings.mode);
+    }
+      Serial.println(payload);  
   }
 }
 
@@ -150,7 +172,7 @@ void simple_flash(uint8_t color_idx, float brightness)
   for(int k = 0; k < NUM_LEDS; k++)
     leds[k] = CRGB(r, g, b); 
   FastLED.show();
-  delay(100);
+  delay(20);
 }
 
 void plot_level(uint16_t level)
