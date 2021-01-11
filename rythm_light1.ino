@@ -32,28 +32,39 @@ uint8_t current_color = 4;
 uint8_t mode = 1;
 
 // for debuging 
-uint64_t t;
+// uint64_t t;
 // int cnt = 0;
+
 
 void setup() 
 {
   Serial.begin(250000);
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  t = micros();
-  // Serial.println(micros() - t); 
-  // t = micros();
 }
 
 void loop() 
 {
-  if((micros() - t) > 300000000) //every 5 mins 
+  if(Serial.available() > 0) // ToDo create separate function
   {
-    t = micros();
-    current_color = (current_color < 9) ? (current_color + 1) : 0;
-  }
-  if(t > micros())
-    t = micros(); 
+    String payload = "";
+    while(Serial.available() > 0)
+    {
+      payload += static_cast<char>(Serial.read());
+    }
 
+    int idx = payload.indexOf("color");
+    int color_dummy = 0;
+
+    if(idx != -1)
+    {
+      for(uint8_t i = 0; i < idx; i++)
+      {
+        color_dummy = color_dummy*10 + static_cast<int>(payload.charAt(i)) - 48; //0 - ASCII code - 48
+      }
+    }
+      Serial.println(payload);
+      Serial.println(color_dummy);
+  }
   switch(mode)
   {
     case 1 :
