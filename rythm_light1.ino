@@ -5,7 +5,8 @@
 #include <ArduinoBlue.h>
 
 #define PIN 5
-#define BAUD_RATE 115200
+#define BAUD_RATE_BLE 9600
+#define BAUD_RATE_SERIAL 115200
 
 // Bluetooth TX -> D2
 const int BLUETOOTH_TX = 4;
@@ -57,8 +58,8 @@ struct device_settings
 void setup() 
 {
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  Serial.begin(BAUD_RATE);
-  ble.begin(BAUD_RATE);
+  Serial.begin(BAUD_RATE_SERIAL);
+  ble.begin(BAUD_RATE_BLE);
   delay(100);
   Serial.println("hello there");
 }
@@ -87,6 +88,7 @@ void update_settings()
 
   if(ble_msg != "")
   {
+    Serial.println(ble_msg);
     idx_col = ble_msg.indexOf("color");
     idx_mode = ble_msg.indexOf("mode");
   }
@@ -217,8 +219,8 @@ String filter_payload(String msg)
 String read_ble_msg()
 {
   static String payload_ble = "";
-  unsigned long time = micros();
-  while(micros() - time < 10000) // workaround created to avoid problem with data packets delivery delay via BLE
+  unsigned long time = millis();
+  while(millis() - time < 20) // workaround created to avoid problem with data packets delivery delay via BLE
   {
     while(ble.available() > 0)
     {
@@ -227,11 +229,10 @@ String read_ble_msg()
       if(symbol == '#')
       {
         String ble_msg = filter_payload(payload_ble);
-        Serial.println(ble_msg);
         payload_ble = "";
         return ble_msg;
       }
-      time = micros();
+      time = millis();
     }
   }   
   return "";
