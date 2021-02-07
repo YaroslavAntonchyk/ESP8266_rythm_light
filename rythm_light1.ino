@@ -219,21 +219,16 @@ String filter_payload(String msg)
 String read_ble_msg()
 {
   static String payload_ble = "";
-  unsigned long time = millis();
-  while(millis() - time < 20) // workaround created to avoid problem with data packets delivery delay via BLE
+  while(ble.available() > 0)
   {
-    while(ble.available() > 0)
+    char symbol = static_cast<char>(ble.read());
+    payload_ble += symbol;
+    if(symbol == '#')
     {
-      char symbol = static_cast<char>(ble.read());
-      payload_ble += symbol;
-      if(symbol == '#')
-      {
-        String ble_msg = filter_payload(payload_ble);
-        payload_ble = "";
-        return ble_msg;
-      }
-      time = millis();
+      String ble_msg = filter_payload(payload_ble);
+      payload_ble = "";
+      return ble_msg;
     }
-  }   
+  }
   return "";
 }
